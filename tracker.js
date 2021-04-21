@@ -202,7 +202,7 @@ const view = () => {
       },
     ])
     .then((answer) => {
-      switch (answer.add) {
+      switch (answer.view) {
         case 'employees':
           viewEmployee();
           break;
@@ -228,19 +228,37 @@ const view = () => {
 }
 
 const viewEmployee = () => {
-
-
-}
+    connection.query('SELECT * FROM employee', (err, res) => {
+        if (err) throw err;     
+            res.forEach(({ first_name, last_name}) =>
+              console.log(
+                `${last_name}, ${first_name}`
+              )
+            );
+});
+};
 
 const viewRole = () => {
-
-    
+    connection.query('SELECT * FROM role', (err, res) => {
+        if (err) throw err;     
+            res.forEach(({ title, salary}) =>
+              console.log(
+                `${title} || ${salary}`
+              )
+            );
+});  
 }
 
 const viewDepartment = () => {
-
-    
-}
+    connection.query('SELECT * FROM departments', (err, res) => {
+        if (err) throw err;     
+            res.forEach(({name}) =>
+              console.log(
+                `${name}`
+              )
+            );
+});
+};
 
 connection.connect((err) => {
     if (err) throw err;
