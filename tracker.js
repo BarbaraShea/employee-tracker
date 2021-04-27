@@ -1,6 +1,8 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 const fs = require('fs');
+const cTable = require('console.table');
+
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -10,7 +12,6 @@ const connection = mysql.createConnection({
     database: 'employee_DB',
   });
 
-
 function start() {  
     inquirer
     .prompt([
@@ -18,7 +19,7 @@ function start() {
         type: 'list',
         message: 'What would you like to do?',
         name: 'action',
-        choices: ['Add departments, roles, employees', 'View departments, roles, employees', 'Update employee roles', 'Exit']
+        choices: ['Add departments, roles, employees', 'View departments, roles, employees', 'Update employee roles', 'Update employee managers', 'View employees by manager', 'Delete departments, roles, and employees', 'View the total utilized budget of a department', 'Exit']
       }
   
     ])
@@ -35,7 +36,23 @@ function start() {
           case 'Update employee roles':
             updateRole();
             break;
+
+          case 'Update employee managers':
+            updateManager();
+            break;
   
+          case 'View employees by manager':
+            viewByManager();
+            break;
+
+          case 'Delete departments, roles, and employees':
+            remove();
+            break;
+
+          case 'View the total utilized budget of a department':
+            budgetByDepartment();
+            break;
+
           case 'Exit':
             connection.end();
             break;
@@ -47,6 +64,7 @@ function start() {
       });
   };
 
+  //ADD functions
 const add = () => {
     inquirer
       .prompt([
@@ -191,6 +209,7 @@ const addDepartment = () => {
       });
   };
 
+  //VIEW functions
 const view = () => {
     inquirer
     .prompt([
@@ -225,38 +244,83 @@ const view = () => {
       }
     });
 
-}
+  };
 
 const viewEmployee = () => {
     connection.query('SELECT * FROM employee', (err, res) => {
         if (err) throw err;     
-            res.forEach(({ first_name, last_name}) =>
-              console.log(
-                `${last_name}, ${first_name}`
-              )
-            );
+        console.table(res);
+        start();
 });
-};
+  };
 
 const viewRole = () => {
     connection.query('SELECT * FROM role', (err, res) => {
         if (err) throw err;     
-            res.forEach(({ title, salary}) =>
-              console.log(
-                `${title} || ${salary}`
-              )
-            );
+        console.table(res);
+        start();
 });  
-}
+  };
 
 const viewDepartment = () => {
     connection.query('SELECT * FROM departments', (err, res) => {
         if (err) throw err;     
-            res.forEach(({name}) =>
-              console.log(
-                `${name}`
-              )
-            );
+        console.table(res);
+        start();
+
+});
+  };
+
+  // UPDATE functions
+const updateRole = () => {
+  console.log("works");
+  connection.query('SELECT * FROM employee', (err, results) => {
+    if (err) throw err;
+    inquirer
+    .prompt([
+      {
+        name: 'choice',
+        type: 'rawlist',
+        message: 'Select an employee:',
+        choices(){
+          const employeeArray = [];
+          results.forEach(({ first_name, last_name } ) => {
+            // let fullname = first_name + " " + last_name;
+            employeeArray.push(`${first_name} ${last_name}`);
+          });
+          return employeeArray;
+        } 
+      },
+      {
+        name: 'newRole',
+        type: 'input',
+        message: 'What is the employees new role?',
+      },
+    ])
+    .then((answer) => {
+      let chosenEmployee;
+        results.forEach((employee) => {
+          if (employee.id === answer.choice) {
+            chosenEmployee = employee;
+          }
+      connection.query(
+        'UPDATE employee SET ? WHERE ?',
+        [
+          {
+            role: answer.newRole,
+          },
+          {
+            id: chosenEmployee.id,
+          },
+        ],
+        (error) => {
+          if (error) throw err;
+          console.log('Employee role updated successfully!');
+          start();
+        }
+      );
+    });
+  });
 });
 };
 
@@ -264,4 +328,4 @@ connection.connect((err) => {
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}`);
     start();
-});
+  });
